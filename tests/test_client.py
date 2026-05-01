@@ -55,3 +55,17 @@ def test_lookup_vm_by_name_returns_match():
 
     result = lookup_vm(si, "test-vm")
     assert result is vm
+
+
+def test_lookup_vm_by_moref_returns_reference():
+    from pyVmomi import vim
+    si = MagicMock()
+    si._stub = MagicMock()
+
+    result = lookup_vm(si, "vm-42")
+
+    assert isinstance(result, vim.VirtualMachine)
+    assert result._stub is si._stub
+    # Verify container view was NOT created (moref path skips name search)
+    content = si.RetrieveContent.return_value
+    assert not content.viewManager.CreateContainerView.called
