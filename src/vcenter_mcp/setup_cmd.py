@@ -12,10 +12,14 @@ def run_setup() -> None:
         cfg = {"targets": {}, "default_target": None, "templates": _default_templates()}
 
     print("\nAdd or update a target")
-    target_name = input("Target name (e.g. lab-vcenter): ").strip()
-    host = input("Host/IP: ").strip()
-    user = input("Username: ").strip()
-    password = getpass.getpass("Password: ")
+    target_name = _prompt_required("Target name (e.g. lab-vcenter)")
+    host = _prompt_required("Host/IP")
+    user = _prompt_required("Username")
+    while True:
+        password = getpass.getpass("Password: ")
+        if password:
+            break
+        print("  Password cannot be empty")
     target_type = _prompt_choice("Type", ["vcenter", "esxi"])
 
     target: dict = {
@@ -28,10 +32,10 @@ def run_setup() -> None:
     }
 
     if target_type == "vcenter":
-        target["datacenter"] = input("Datacenter name: ").strip()
-        target["cluster"] = input("Cluster name: ").strip()
+        target["datacenter"] = _prompt_required("Datacenter name")
+        target["cluster"] = _prompt_required("Cluster name")
 
-    target["datastore"] = input("Datastore name: ").strip()
+    target["datastore"] = _prompt_required("Datastore name")
 
     print("\nDefine network profiles (press Enter with no name to finish)")
     while True:
@@ -48,7 +52,7 @@ def run_setup() -> None:
             target["networks"][profile_name] = portgroups
 
     if not target["networks"]:
-        pg = input("Portgroup name (at least one required): ").strip()
+        pg = _prompt_required("Portgroup name")
         target["networks"]["standard"] = [pg]
 
     target["default_network"] = _prompt_choice(
@@ -74,6 +78,14 @@ def _prompt_choice(label: str, options: list[str]) -> str:
         if val in options:
             return val
         print(f"  Please enter one of: {options}")
+
+
+def _prompt_required(label: str) -> str:
+    while True:
+        val = input(f"{label}: ").strip()
+        if val:
+            return val
+        print(f"  {label} cannot be empty")
 
 
 def _default_templates() -> dict:
