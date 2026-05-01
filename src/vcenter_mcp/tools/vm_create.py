@@ -59,6 +59,10 @@ def _create_vm(content, target_cfg: dict, name: str, tmpl: dict, portgroup_names
     scsi_spec = _add_spec(scsi)
 
     # Disk (key=2000, attached to SCSI key=1000)
+    if tmpl["disk_provisioning"] not in ("thin", "thick"):
+        raise ValueError(
+            f"disk_provisioning must be 'thin' or 'thick', got '{tmpl['disk_provisioning']}'"
+        )
     disk_backing = vim.vm.device.VirtualDisk.FlatVer2BackingInfo()
     disk_backing.diskMode = "persistent"
     disk_backing.thinProvisioned = (tmpl["disk_provisioning"] == "thin")
@@ -75,6 +79,8 @@ def _create_vm(content, target_cfg: dict, name: str, tmpl: dict, portgroup_names
     )
 
     # NICs (keys start at 4000)
+    if not portgroup_names:
+        raise ValueError(f"Network profile has no portgroups defined")
     nic_specs = []
     nic_keys = []
     for i, pg_name in enumerate(portgroup_names):
