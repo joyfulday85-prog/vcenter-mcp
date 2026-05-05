@@ -5,10 +5,21 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vcenter-mcp"
 version = "0.1.0"
+description = "MCP server for VMware vCenter / ESXi VM lifecycle management"
+readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.10"
+authors = [
+    { name = "Michael Rice", email = "michael@michaelrice.org" },
+]
 dependencies = [
     "mcp",
     "pyVmomi",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
 ]
 
 [project.scripts]
@@ -16,3 +27,6 @@ vcenter-mcp = "vcenter_mcp.server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
