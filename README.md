@@ -127,6 +127,26 @@ The destructive tools (`create_vm`, `power_on_vm`, `power_off_vm`, `delete_vm`) 
 | `power_off_vm` | Hard power off a VM by display name or moref ID. |
 | `delete_vm` | Permanently delete a VM (powers off first if running, then destroys from disk). |
 
+## Connection management
+
+`vcenter-mcp` maintains a shared `ServiceInstance` per `user@host` combination for the lifetime of the MCP server process rather than opening and closing a new connection on every tool call.
+
+**Session lifecycle:**
+- **Created** on the first tool call for a given target
+- **Reused** on all subsequent calls with the same credentials
+- **Reconnected** automatically if a liveness ping (`currentSession`) detects the session has expired
+- **Disconnected** explicitly when a session is replaced (ping failure) or invalidated (`NotAuthenticated` / `SecurityError` fault)
+
+**Session sharing rules:**
+
+| Scenario | Result |
+|---|---|
+| Same user, same vCenter | Single shared session |
+| Different user, same vCenter | Separate session per user |
+| Same user, different vCenter | Separate session per host |
+
+Concurrent tool calls are safe — a `threading.Lock` guards all cache reads and writes.
+
 ## Notes on TLS
 
 `vcenter-mcp` connects with an unverified SSL context, which is the same default that `govc` and most pyVmomi sample code use because lab vCenters very commonly have self-signed certs. If your target uses a properly-signed certificate and you'd prefer real verification, swap `_ssl_context()` in `src/vcenter_mcp/client.py`.
