@@ -108,23 +108,27 @@ def test_session_manager_reconnects_when_ping_fails():
     mgr = _make_manager()
     si_a, si_b = MagicMock(), MagicMock()
     with patch("vcenter_mcp.client.SmartConnect", side_effect=[si_a, si_b]) as mock_connect, \
-         patch.object(SessionManager, "_ping", return_value=False):
+         patch.object(SessionManager, "_ping", return_value=False), \
+         patch.object(SessionManager, "_disconnect") as mock_disconnect:
         first = mgr.get(_CFG)
         second = mgr.get(_CFG)
     assert mock_connect.call_count == 2
     assert first is si_a
     assert second is si_b
+    mock_disconnect.assert_called_once_with(si_a)
 
 
 def test_session_manager_invalidate_forces_reconnect():
     mgr = _make_manager()
     si_a, si_b = MagicMock(), MagicMock()
     with patch("vcenter_mcp.client.SmartConnect", side_effect=[si_a, si_b]), \
-         patch.object(SessionManager, "_ping", return_value=True):
+         patch.object(SessionManager, "_ping", return_value=True), \
+         patch.object(SessionManager, "_disconnect") as mock_disconnect:
         mgr.get(_CFG)
         mgr.invalidate(_CFG)
         result = mgr.get(_CFG)
     assert result is si_b
+    mock_disconnect.assert_called_once_with(si_a)
 
 
 def test_session_manager_key_isolates_targets():

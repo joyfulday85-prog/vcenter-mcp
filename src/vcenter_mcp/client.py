@@ -46,12 +46,21 @@ class SessionManager:
         except Exception:
             return False
 
+    @staticmethod
+    def _disconnect(si: vim.ServiceInstance) -> None:
+        try:
+            Disconnect(si)
+        except Exception:
+            pass
+
     def get(self, target_cfg: dict) -> vim.ServiceInstance:
         """Return a live ServiceInstance, reconnecting if necessary."""
         key = self._key(target_cfg)
         with self._lock:
             si = self._sessions.get(key)
             if si is None or not self._ping(si):
+                if si is not None:
+                    self._disconnect(si)
                 si = self._connect(target_cfg)
                 self._sessions[key] = si
             return si
@@ -60,7 +69,9 @@ class SessionManager:
         """Remove the cached session so the next call reconnects."""
         key = self._key(target_cfg)
         with self._lock:
-            self._sessions.pop(key, None)
+            si = self._sessions.pop(key, None)
+            if si is not None:
+                self._disconnect(si)
 
 
 _session_manager = SessionManager()
