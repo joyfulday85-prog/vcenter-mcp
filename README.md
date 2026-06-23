@@ -119,13 +119,83 @@ The destructive tools (`create_vm`, `power_on_vm`, `power_off_vm`, `delete_vm`) 
 
 ## Tools
 
-| Tool | What it does |
+### `list_vms`
+
+List VMs on a target using a single PropertyCollector RPC (no per-VM round trips).
+
+| Parameter | Type | Description |
+|---|---|---|
+| `target` | string (optional) | Target name from config. Defaults to `default_target`. |
+| `datacenter` | string (optional) | vCenter only — datacenter to list. Defaults to the target's configured datacenter. |
+
+Each VM in the returned list includes:
+
+| Field | Description |
 |---|---|
-| `list_vms` | List VMs on a target. vCenter targets group by host within a datacenter; ESXi targets list everything on the host. |
-| `create_vm` | Create a VM that network-boots first. Pick a `vm_type` (template), optional CPU/RAM/disk overrides, optional `network_profile`. |
-| `power_on_vm` | Power on a VM by display name or moref ID. |
-| `power_off_vm` | Hard power off a VM by display name or moref ID. |
-| `delete_vm` | Permanently delete a VM (powers off first if running, then destroys from disk). |
+| `name` | Display name |
+| `moref` | Managed object reference ID (e.g. `vm-42`) |
+| `uuid` | BIOS UUID |
+| `power_state` | `poweredOn`, `poweredOff`, or `suspended` |
+| `guest_id` | Guest OS identifier (e.g. `ubuntu64Guest`) |
+| `guest_full_name` | Full guest OS name |
+| `cpu_count` | Number of vCPUs |
+| `memory_mb` | Memory in MB |
+| `storage_used_bytes` | Committed storage in bytes |
+| `primary_ip` | Primary guest IP (requires VMware Tools) |
+| `nics` | List of NICs — each with `mac`, `network`, and `guest_ips` (requires VMware Tools) |
+| `disks` | List of virtual disks — each with `capacity_bytes` and `file` (datastore-relative path) |
+
+On error, returns a single dict with an `error` key.
+
+---
+
+### `create_vm`
+
+Create a VM that network-boots first.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `name` | string | Display name for the new VM |
+| `vm_type` | string | Template name from config (e.g. `esxi`, `ubuntu`, `rhel`) |
+| `target` | string (optional) | Target name from config. Defaults to `default_target`. |
+| `network_profile` | string (optional) | Named network profile from target config (e.g. `standard`, `secure-boot`). Defaults to `default_network`. |
+| `cpu` | int (optional) | Override template CPU count |
+| `ram_mb` | int (optional) | Override template memory in MB |
+| `disk_gb` | int (optional) | Override template disk size in GB |
+| `disk_provisioning` | string (optional) | `thin` (default) or `thick` |
+
+---
+
+### `power_on_vm`
+
+Power on a VM by display name or moref ID (e.g. `vm-42`).
+
+| Parameter | Type | Description |
+|---|---|---|
+| `name_or_id` | string | Display name or moref ID |
+| `target` | string (optional) | Target name from config. Defaults to `default_target`. |
+
+---
+
+### `power_off_vm`
+
+Hard power off a VM by display name or moref ID (e.g. `vm-42`).
+
+| Parameter | Type | Description |
+|---|---|---|
+| `name_or_id` | string | Display name or moref ID |
+| `target` | string (optional) | Target name from config. Defaults to `default_target`. |
+
+---
+
+### `delete_vm`
+
+Permanently delete a VM (powers off first if running, then destroys from disk).
+
+| Parameter | Type | Description |
+|---|---|---|
+| `name_or_id` | string | Display name or moref ID |
+| `target` | string (optional) | Target name from config. Defaults to `default_target`. |
 
 ## Connection management
 
